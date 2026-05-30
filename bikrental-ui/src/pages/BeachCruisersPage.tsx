@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import type { BeachCruiser } from '../types';
 import { bikeApi } from '../services/api';
 import { BeachCruiserCard } from '../components/BeachCruiserCard';
 import { AccessoryModal } from '../components/AccessoryModal';
+import { useToast } from '../hooks/useToast';
 
 export function BeachCruisersPage() {
   const [bikes, setBikes] = useState<BeachCruiser[]>([]);
   const [loading, setLoading] = useState(true);
   const [rentingId, setRentingId] = useState<number | null>(null);
   const [showAccessories, setShowAccessories] = useState(false);
-  const [toast, setToast] = useState('');
+  const { toast, showToast } = useToast();
 
   useEffect(() => {
     bikeApi.getBeachCruisers().then((data) => {
@@ -17,11 +19,6 @@ export function BeachCruisersPage() {
       setLoading(false);
     });
   }, []);
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 4000);
-  };
 
   const handleRent = async (id: number) => {
     setRentingId(id);
@@ -44,7 +41,7 @@ export function BeachCruisersPage() {
   return (
     <div className="page">
       <header className="page-header beach-header">
-        <a href="/" className="back-btn">← Back</a>
+        <Link to="/" className="back-btn">← Back</Link>
         <h1>🏖️ Beach Cruisers</h1>
       </header>
 
@@ -70,7 +67,7 @@ export function BeachCruisersPage() {
         />
       )}
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
 }

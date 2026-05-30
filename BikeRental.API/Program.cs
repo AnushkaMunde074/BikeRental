@@ -1,6 +1,7 @@
 using BikeRental.API.Data;
 using BikeRental.API.Middleware;
 using BikeRental.API.Services;
+using BikeRental.API.Settings;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<BikeRentalDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Services (Dependency Injection — replaces the old static ApplicationServices class)
+// Strongly-typed configuration
+builder.Services.Configure<FleetSettings>(builder.Configuration.GetSection("FleetSettings"));
+
+// Services (Dependency Injection)
 builder.Services.AddScoped<IBikeService, BikeService>();
 builder.Services.AddScoped<IAccessoryService, AccessoryService>();
 
@@ -22,11 +26,15 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 // Swagger/OpenAPI
 builder.Services.AddOpenApi();
 
-// CORS for React frontend (dev on different port)
+// Health checks
+builder.Services.AddHealthChecks();
+
+// CORS — origins are environment-specific via appsettings
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("ReactDev", policy =>
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+    options.AddPolicy("ReactApp", policy =>
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
@@ -42,15 +50,16 @@ using (var scope = app.Services.CreateScope())
 
 // Middleware pipeline
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseCors("ReactApp");
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseCors("ReactDev");
 }
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();

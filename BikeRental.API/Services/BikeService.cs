@@ -1,6 +1,8 @@
 using BikeRental.API.Data;
 using BikeRental.API.DTOs;
+using BikeRental.API.Settings;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BikeRental.API.Services;
 
@@ -16,11 +18,13 @@ public class BikeService : IBikeService
 {
     private readonly BikeRentalDbContext _db;
     private readonly ILogger<BikeService> _logger;
+    private readonly FleetSettings _fleet;
 
-    public BikeService(BikeRentalDbContext db, ILogger<BikeService> logger)
+    public BikeService(BikeRentalDbContext db, ILogger<BikeService> logger, IOptions<FleetSettings> fleetOptions)
     {
         _db = db;
         _logger = logger;
+        _fleet = fleetOptions.Value;
     }
 
     public async Task<List<BeachCruiserDto>> GetBeachCruisersAsync()
@@ -75,21 +79,18 @@ public class BikeService : IBikeService
     {
         // Reset beach cruisers to seed availability
         var beachBikes = await _db.BeachCruisers.ToListAsync();
-        var defaultUnavailableBeach = new HashSet<int> { 3, 6 };
         foreach (var bike in beachBikes)
-            bike.IsAvailable = !defaultUnavailableBeach.Contains(bike.Id);
+            bike.IsAvailable = !_fleet.UnavailableBeachIds.Contains(bike.Id);
 
         // Reset mountain bikes to seed availability
         var mountainBikes = await _db.MountainBikes.ToListAsync();
-        var defaultUnavailableMountain = new HashSet<int> { 103, 106 };
         foreach (var bike in mountainBikes)
-            bike.IsAvailable = !defaultUnavailableMountain.Contains(bike.Id);
+            bike.IsAvailable = !_fleet.UnavailableMountainIds.Contains(bike.Id);
 
         // Reset accessory stock
         var accessories = await _db.Accessories.ToListAsync();
-        var defaultStock = new Dictionary<int, int> { { 1, 15 }, { 2, 8 }, { 3, 20 }, { 4, 6 } };
         foreach (var acc in accessories)
-            if (defaultStock.TryGetValue(acc.Id, out var stock))
+            if (_fleet.AccessoryDefaults.TryGetValue(acc.Id, out var stock))
                 acc.StockCount = stock;
 
         // Close active rentals

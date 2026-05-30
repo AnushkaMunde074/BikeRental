@@ -64,10 +64,17 @@ export function AccessoryModal({ bikeType, onClose, onSuccess }: Props) {
     }
   };
 
-  if (loading) return <div className="modal-overlay visible"><div className="modal"><p style={{ padding: 40, textAlign: 'center' }}>Loading accessories...</p></div></div>;
+  if (loading)
+    return (
+      <div className="modal-overlay">
+        <div className="modal">
+          <p style={{ padding: 40, textAlign: 'center' }}>Loading accessories...</p>
+        </div>
+      </div>
+    );
 
   return (
-    <div className="modal-overlay visible">
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Add Accessories">
       <div className="modal">
         <div className="modal-header">
           <h2>🛍️ Add Accessories</h2>
@@ -93,10 +100,20 @@ export function AccessoryModal({ bikeType, onClose, onSuccess }: Props) {
               <div className="acc-controls">
                 <span className="acc-price">${acc.unitPrice.toFixed(2)}</span>
                 {acc.stockCount > 0 ? (
-                  <div className="qty-row">
-                    <button className="qty-btn" onClick={() => updateQty(acc.id, -1)}>−</button>
-                    <span className="qty-display">{quantities[acc.id] || 0}</span>
-                    <button className="qty-btn" onClick={() => updateQty(acc.id, 1)}>+</button>
+                  <div className="qty-control">
+                    <button
+                      onClick={() => updateQty(acc.id, -1)}
+                      aria-label={`Decrease quantity of ${acc.name}`}
+                    >
+                      −
+                    </button>
+                    <span>{quantities[acc.id] || 0}</span>
+                    <button
+                      onClick={() => updateQty(acc.id, 1)}
+                      aria-label={`Increase quantity of ${acc.name}`}
+                    >
+                      +
+                    </button>
                   </div>
                 ) : (
                   <span className="out-of-stock">Out of stock</span>
@@ -107,13 +124,21 @@ export function AccessoryModal({ bikeType, onClose, onSuccess }: Props) {
         </div>
 
         <div className="modal-footer">
-          <div className="modal-total">
-            Total: <strong>${total.toFixed(2)}</strong>
-            {discount > 0 && <span className="discount-tag"> (-${discount.toFixed(2)})</span>}
+          <div className="order-summary">
+            {discount > 0 && (
+              <div className="summary-row discount-row">
+                <span>Bundle Discount</span>
+                <span>-${discount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="summary-row total">
+              <span>Total</span>
+              <span>${total.toFixed(2)}</span>
+            </div>
           </div>
           <div className="modal-actions">
-            <button className="btn-secondary" onClick={onClose}>Skip</button>
-            <button className="btn-primary" onClick={handleSubmit} disabled={submitting}>
+            <button className="btn-cancel" onClick={onClose}>Skip</button>
+            <button className="btn-order" onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'Processing...' : 'Add to Rental'}
             </button>
           </div>

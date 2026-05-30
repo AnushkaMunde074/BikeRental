@@ -1,18 +1,19 @@
-import { bikeApi } from '../services/api';
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import { bikeApi } from '../services/api';
+import { useToast } from '../hooks/useToast';
 
 export function HomePage() {
   const [resetting, setResetting] = useState(false);
-  const [toast, setToast] = useState('');
+  const { toast, showToast } = useToast();
 
   const handleReset = async () => {
     setResetting(true);
     try {
       const result = await bikeApi.resetFleet();
-      setToast(result.message);
-      setTimeout(() => setToast(''), 4000);
+      showToast(result.message);
     } catch {
-      setToast('Reset failed');
+      showToast('Reset failed');
     }
     setResetting(false);
   };
@@ -25,17 +26,17 @@ export function HomePage() {
       </header>
 
       <div className="category-grid">
-        <a href="/beach-cruisers" className="category-card beach-card">
+        <Link to="/beach-cruisers" className="category-card beach-card">
           <div className="category-icon">🏖️</div>
           <h2>Beach Cruisers</h2>
           <p>Smooth rides along the coast. Relaxed geometry, wide tires, pure vibes.</p>
-        </a>
+        </Link>
 
-        <a href="/mountain-bikes" className="category-card mountain-card">
+        <Link to="/mountain-bikes" className="category-card mountain-card">
           <div className="category-icon">⛰️</div>
           <h2>Mountain Bikes</h2>
           <p>Built for trails. Full suspension, aggressive gearing, ready for anything.</p>
-        </a>
+        </Link>
       </div>
 
       <div className="admin-section">
@@ -44,7 +45,7 @@ export function HomePage() {
         </button>
       </div>
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
 }
