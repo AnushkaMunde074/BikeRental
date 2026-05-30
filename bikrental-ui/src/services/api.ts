@@ -1,6 +1,6 @@
 import type { BeachCruiser, MountainBike, Accessory, RentResponse, OrderResponse } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5035/api';
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {

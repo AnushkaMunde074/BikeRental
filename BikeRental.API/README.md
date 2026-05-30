@@ -26,7 +26,9 @@ A .NET 9 Web API that replaces the legacy .NET Framework 4.8 ASP.NET Web Applica
 - **SQL Server LocalDB** (development database)
 - **Dependency Injection** (scoped services)
 - **OpenAPI/Swagger** (development endpoint discovery)
-- **CORS** configured for React dev server
+- **Health checks** (`/health`) for runtime probes
+- **CORS** configured via `AllowedOrigins` (with local fallback for dev)
+- **Strongly typed settings** via `FleetSettings`
 
 ## Project Structure
 
@@ -71,8 +73,10 @@ BikeRental.API/
 2. **Dependency Injection** — Services are scoped per-request; testable via interfaces (`IBikeService`, `IAccessoryService`)
 3. **Global Error Handling** — Middleware catches all exceptions, logs them, returns consistent JSON error responses
 4. **Bundle Discount Logic** — Accessory orders with Water Bottle (ID 1) + Bike Light (ID 3) get 10% off
-5. **Seed Data** — Database auto-creates and seeds 6 beach cruisers, 6 mountain bikes, and 4 accessories on first run
-6. **No Legacy Baggage** — Removed `BinaryFormatterCache` (security risk), `FleetMonitor` (raw thread), `ShellIntegration` (COM dependency)
+5. **Config-driven defaults** — Fleet availability and accessory reset stock come from `FleetSettings`
+6. **Health endpoint** — `/health` supports probes and operational monitoring
+7. **Seed Data** — Database auto-creates and seeds 6 beach cruisers, 6 mountain bikes, and 4 accessories on first run
+8. **No Legacy Baggage** — Removed `BinaryFormatterCache` (security risk), `FleetMonitor` (raw thread), `ShellIntegration` (COM dependency)
 
 ## Running
 
@@ -85,11 +89,26 @@ API starts on `http://localhost:5035`. Requires SQL Server LocalDB installed.
 
 ## Configuration
 
-Connection string in `appsettings.json`:
+Key settings in `appsettings.json`:
 ```json
 {
   "ConnectionStrings": {
     "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=BikeRentalDb;Trusted_Connection=True;TrustServerCertificate=True"
+  },
+  "AllowedOrigins": ["http://localhost:5173"],
+  "FleetSettings": {
+    "UnavailableBeachIds": [3, 6],
+    "UnavailableMountainIds": [103, 106],
+    "AccessoryDefaults": {
+      "1": 15,
+      "2": 8,
+      "3": 20,
+      "4": 6
+    }
   }
 }
 ```
+
+Notes:
+- If `AllowedOrigins` is empty, API falls back to localhost dev origins.
+- OpenAPI endpoint is exposed in Development.

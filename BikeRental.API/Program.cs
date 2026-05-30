@@ -34,9 +34,17 @@ var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<stri
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
-        policy.WithOrigins(allowedOrigins)
+    {
+        var origins = allowedOrigins.Where(o => !string.IsNullOrWhiteSpace(o)).ToArray();
+        if (origins.Length == 0)
+        {
+            origins = ["http://localhost:5173", "http://localhost:3000"];
+        }
+
+        policy.WithOrigins(origins)
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod();
+    });
 });
 
 var app = builder.Build();

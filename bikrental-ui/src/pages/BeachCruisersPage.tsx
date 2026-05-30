@@ -14,10 +14,17 @@ export function BeachCruisersPage() {
   const { toast, showToast } = useToast();
 
   useEffect(() => {
-    bikeApi.getBeachCruisers().then((data) => {
-      setBikes(data);
-      setLoading(false);
-    });
+    bikeApi
+      .getBeachCruisers()
+      .then((data) => {
+        setBikes(data);
+      })
+      .catch((err) => {
+        showToast(err instanceof Error ? err.message : 'Failed to load beach cruisers');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const handleRent = async (id: number) => {
@@ -25,15 +32,16 @@ export function BeachCruisersPage() {
     try {
       const result = await bikeApi.rentBike('beach', id);
       if (result.success) {
-        setBikes(bikes.map((b) => (b.id === id ? { ...b, isAvailable: false } : b)));
+        setBikes((prev) => prev.map((b) => (b.id === id ? { ...b, isAvailable: false } : b)));
         setShowAccessories(true);
       } else {
         showToast(result.message);
       }
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Rental failed');
+    } finally {
+      setRentingId(null);
     }
-    setRentingId(null);
   };
 
   if (loading) return <div className="loading">Loading bikes...</div>;

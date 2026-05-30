@@ -13,15 +13,33 @@ export function AccessoryModal({ bikeType, onClose, onSuccess }: Props) {
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    accessoryApi.getAccessories(bikeType).then((data) => {
-      setAccessories(data);
-      const initial: Record<number, number> = {};
-      data.forEach((a) => (initial[a.id] = 0));
-      setQuantities(initial);
-      setLoading(false);
-    });
+    let isActive = true;
+
+    accessoryApi
+      .getAccessories(bikeType)
+      .then((data) => {
+        if (!isActive) return;
+        setAccessories(data);
+        const initial: Record<number, number> = {};
+        data.forEach((a) => (initial[a.id] = 0));
+        setQuantities(initial);
+      })
+      .catch((err) => {
+        if (!isActive) return;
+        setLoadError(err instanceof Error ? err.message : 'Failed to load accessories');
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, [bikeType]);
 
   const bundleIds = new Set([1, 3]);
@@ -38,7 +56,7 @@ export function AccessoryModal({ bikeType, onClose, onSuccess }: Props) {
     const acc = accessories.find((a) => a.id === id);
     if (!acc) return;
     const newQty = Math.max(0, Math.min(acc.stockCount, (quantities[id] || 0) + delta));
-    setQuantities({ ...quantities, [id]: newQty });
+    setQuantities((prev) => ({ ...prev, [id]: newQty }));
   };
 
   const handleSubmit = async () => {
@@ -61,6 +79,8 @@ export function AccessoryModal({ bikeType, onClose, onSuccess }: Props) {
       onSuccess(msg);
     } catch (err) {
       onSuccess(`Order failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -69,6 +89,23 @@ export function AccessoryModal({ bikeType, onClose, onSuccess }: Props) {
       <div className="modal-overlay">
         <div className="modal">
           <p style={{ padding: 40, textAlign: 'center' }}>Loading accessories...</p>
+        </div>
+      </div>
+    );
+
+  if (loadError)
+    return (
+      <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Accessories unavailable">
+        <div className="modal">
+          <div className="modal-header">
+            <h2>Accessories unavailable</h2>
+            <p>{loadError}</p>
+          </div>
+          <div className="modal-footer">
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={onClose}>Continue without accessories</button>
+            </div>
+          </div>
         </div>
       </div>
     );

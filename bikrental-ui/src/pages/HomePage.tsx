@@ -14,8 +14,9 @@ export function HomePage() {
       showToast(result.message);
     } catch {
       showToast('Reset failed');
+    } finally {
+      setResetting(false);
     }
-    setResetting(false);
   };
 
   return (
